@@ -9,6 +9,9 @@ If you encounter any issues while using this code repository, you can contact 20
 
 [Datasets:Qata-Cov19](https://www.kaggle.com/datasets/aysendegerli/qatacov19-dataset)
 
+<img width="975" height="780" alt="image" src="https://github.com/user-attachments/assets/f298ac7a-9c13-4e89-b178-f1be03de4c7a" />
+
+
 ## Cite
 ```
 @INPROCEEDINGS{11239364,

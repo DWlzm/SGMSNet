@@ -4,8 +4,10 @@ Complex anatomical structures, blurred boundaries, and significant scale variati
 
 If you encounter any issues while using this code repository, you can contact 2033771388@qq.com.
 
-## Datasets
-https://www.kaggle.com/datasets/aysendegerli/qatacov19-dataset
+## Paper and Datasets
+[Papaer](https://ieeexplore.ieee.org/document/11239364/)
+
+[Datasets:Qata-Cov19](https://www.kaggle.com/datasets/aysendegerli/qatacov19-dataset)
 
 ## Cite
 ```

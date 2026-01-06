@@ -10,7 +10,7 @@ https://www.kaggle.com/datasets/aysendegerli/qatacov19-dataset
 ## Cite
 ```
 @INPROCEEDINGS{11239364,
-  author={u, Zhongming Li and Huang, Xin and Li, Xiao and Zou, Xiang},
+  author={Zhongming, Liu and Huang, Xin and Li, Xiao and Zou, Xiang},
   booktitle={2025 19th International Conference on Complex Medical Engineering (CME)}, 
   title={SGMSNet: Spatial-Gated Memory Network for Chest X-ray Image Segmentation}, 
   year={2025},

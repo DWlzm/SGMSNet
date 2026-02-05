@@ -1,6 +1,5 @@
 """
-SAM (分割注意力网络) 实现
-参考: "SAM: Spatial Attention and Memory for Medical Image Segmentation"
+SGMSNet: Spatial-Gated Memory Network for Chest X-ray Image Segmentation
 """
 import torch
 import torch.nn as nn
@@ -142,10 +141,10 @@ class DecoderBlock(nn.Module):
         
         return x
 
-class SAM(nn.Module):
+class SGMSNet(nn.Module):
     """分割注意力网络模型"""
     def __init__(self, in_channels=3, out_channels=1, base_filters=64, use_memory=True):
-        super(SAM, self).__init__()
+        super(SGMSNet, self).__init__()
         self.use_memory = use_memory
         
         # 使用ResNet-34作为编码器
@@ -208,106 +207,16 @@ class SAM(nn.Module):
         
         return output
 
-class SAMLite(nn.Module):
-    """轻量级分割注意力网络模型"""
-    def __init__(self, in_channels=3, out_channels=1, base_filters=32):
-        super(SAMLite, self).__init__()
-        
-        # 编码器
-        self.enc1 = nn.Sequential(
-            nn.Conv2d(in_channels, base_filters, kernel_size=3, padding=1),
-            nn.BatchNorm2d(base_filters),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )  # 输出尺寸: 1/2, 32
-        
-        self.enc2 = nn.Sequential(
-            nn.Conv2d(base_filters, base_filters * 2, kernel_size=3, padding=1),
-            nn.BatchNorm2d(base_filters * 2),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )  # 输出尺寸: 1/4, 64
-        
-        self.enc3 = nn.Sequential(
-            nn.Conv2d(base_filters * 2, base_filters * 4, kernel_size=3, padding=1),
-            nn.BatchNorm2d(base_filters * 4),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )  # 输出尺寸: 1/8, 128
-        
-        self.enc4 = nn.Sequential(
-            nn.Conv2d(base_filters * 4, base_filters * 8, kernel_size=3, padding=1),
-            nn.BatchNorm2d(base_filters * 8),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )  # 输出尺寸: 1/16, 256
-        
-        # 瓶颈
-        self.bottleneck = nn.Sequential(
-            nn.Conv2d(base_filters * 8, base_filters * 8, kernel_size=3, padding=1),
-            nn.BatchNorm2d(base_filters * 8),
-            nn.ReLU(inplace=True)
-        )
-        
-        # 空间注意力
-        self.attention = SpatialAttentionModule(base_filters * 8)
-        
-        # 解码器
-        self.dec4 = DecoderBlock(base_filters * 8 + base_filters * 8, base_filters * 4, use_attention=True, skip_channels=base_filters * 8)
-        self.dec3 = DecoderBlock(base_filters * 4 + base_filters * 4, base_filters * 2, use_attention=True, skip_channels=base_filters * 4)
-        self.dec2 = DecoderBlock(base_filters * 2 + base_filters * 2, base_filters, use_attention=False, skip_channels=base_filters * 2)
-        self.dec1 = DecoderBlock(base_filters, base_filters, use_attention=False, skip_channels=None)
-        
-        # 输出层
-        self.final = nn.Conv2d(base_filters, out_channels, kernel_size=1)
-    
-    def forward(self, x):
-        # 记录原始输入尺寸
-        input_size = x.size()
-        
-        # 编码器
-        enc1 = self.enc1(x)  # 1/2, 32
-        enc2 = self.enc2(enc1)  # 1/4, 64
-        enc3 = self.enc3(enc2)  # 1/8, 128
-        enc4 = self.enc4(enc3)  # 1/16, 256
-        
-        # 瓶颈
-        bottleneck = self.bottleneck(enc4)
-        
-        # 空间注意力
-        bottleneck, _ = self.attention(bottleneck)
-        
-        # 解码器
-        dec4 = self.dec4(bottleneck, enc4)
-        dec3 = self.dec3(dec4, enc3)
-        dec2 = self.dec2(dec3, enc2)
-        dec1 = self.dec1(dec2)
-        
-        # 输出层
-        output = self.final(dec1)
-        
-        # 上采样到原始尺寸
-        output = F.interpolate(output, size=(input_size[2], input_size[3]), mode='bilinear', align_corners=True)
-        
-        return output
 
 if __name__ == "__main__":
     # 测试代码
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # 测试SAM模型
-    model = SAM(in_channels=3, out_channels=1).to(device)
+    model = SGMSNet(in_channels=3, out_channels=1).to(device)
     x = torch.randn(2, 3, 224, 224).to(device)
     output = model(x)
     print(f"SAM 输入形状: {x.shape}")
     print(f"SAM 输出形状: {output.shape}")
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"SAM 可训练参数量: {total_params:,}")
-    
-    # 测试SAMLite模型
-    model_lite = SAMLite(in_channels=3, out_channels=1).to(device)
-    output_lite = model_lite(x)
-    print(f"\nSAMLite 输入形状: {x.shape}")
-    print(f"SAMLite 输出形状: {output_lite.shape}")
-    total_params_lite = sum(p.numel() for p in model_lite.parameters() if p.requires_grad)
-    print(f"SAMLite 可训练参数量: {total_params_lite:,}") 
